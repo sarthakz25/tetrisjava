@@ -20,6 +20,9 @@ public class PlayManager {
     final int MINO_START_X;
     final int MINO_START_Y;
 
+    //    miscellaneous
+    public static int dropInterval = 60; // drop in every 60 frames
+
     public PlayManager() {
 //        main play area frame
         left_x = (GamePanel.WIDTH / 2) - (WIDTH / 2);
@@ -49,7 +52,7 @@ public class PlayManager {
         int x = right_x + 100;
         int y = bottom_y - 200;
         g2.drawRect(x, y, 200, 200);
-        g2.setFont(new Font("Courier New", Font.PLAIN, 25));
+        g2.setFont(new Font("Courier New", Font.BOLD, 25));
         g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         g2.drawString("NEXT", x + 70, y + 50);
 
