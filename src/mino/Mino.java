@@ -11,6 +11,7 @@ public class Mino {
     int autoDropCounter = 0;
     //    4 directions (1,2,3,4)
     public int direction = 1;
+    boolean leftCollision, rightCollision, bottomCollision;
 
     public void create(Color c) {
         b[0] = new Block(c);
@@ -27,15 +28,19 @@ public class Mino {
     }
 
     public void updateXY(int direction) {
-        this.direction = direction;
-        b[0].x = tempB[0].x;
-        b[0].y = tempB[0].y;
-        b[1].x = tempB[1].x;
-        b[1].y = tempB[1].y;
-        b[2].x = tempB[2].x;
-        b[2].y = tempB[2].y;
-        b[3].x = tempB[3].x;
-        b[3].y = tempB[3].y;
+        checkRotationCollision();
+
+        if (!leftCollision && !rightCollision && !bottomCollision) {
+            this.direction = direction;
+            b[0].x = tempB[0].x;
+            b[0].y = tempB[0].y;
+            b[1].x = tempB[1].x;
+            b[1].y = tempB[1].y;
+            b[2].x = tempB[2].x;
+            b[2].y = tempB[2].y;
+            b[3].x = tempB[3].x;
+            b[3].y = tempB[3].y;
+        }
     }
 
     public void getDirection1() {
@@ -48,6 +53,64 @@ public class Mino {
     }
 
     public void getDirection4() {
+    }
+
+    public void checkMovementCollision() {
+        leftCollision = false;
+        rightCollision = false;
+        bottomCollision = false;
+
+//        to check frame collision
+//        left wall
+        for (Block value : b) {
+            if (value.x == PlayManager.left_x) {
+                leftCollision = true;
+                break;
+            }
+        }
+//        right wall
+        for (Block value : b) {
+            if (value.x + Block.SIZE == PlayManager.right_x) {
+                rightCollision = true;
+                break;
+            }
+        }
+//        bottom wall
+        for (Block value : b) {
+            if (value.y + Block.SIZE == PlayManager.bottom_y) {
+                bottomCollision = true;
+                break;
+            }
+        }
+    }
+
+    public void checkRotationCollision() {
+        leftCollision = false;
+        rightCollision = false;
+        bottomCollision = false;
+
+//        check frame collision
+//        left wall
+        for (Block value : tempB) {
+            if (value.x < PlayManager.left_x) {
+                leftCollision = true;
+                break;
+            }
+        }
+//        right wall
+        for (Block value : tempB) {
+            if (value.x + Block.SIZE > PlayManager.right_x) {
+                rightCollision = true;
+                break;
+            }
+        }
+//        bottom wall
+        for (Block value : tempB) {
+            if (value.y + Block.SIZE > PlayManager.bottom_y) {
+                bottomCollision = true;
+                break;
+            }
+        }
     }
 
     public void update() {
@@ -69,32 +132,42 @@ public class Mino {
             }
             KeyHandler.upKeyPressed = false;
         }
+
+        checkMovementCollision();
+
         if (KeyHandler.downKeyPressed) {
-            b[0].y += Block.SIZE;
-            b[1].y += Block.SIZE;
-            b[2].y += Block.SIZE;
-            b[3].y += Block.SIZE;
+//            allow mino to move down if not hitting bottom
+            if (!bottomCollision) {
+                b[0].y += Block.SIZE;
+                b[1].y += Block.SIZE;
+                b[2].y += Block.SIZE;
+                b[3].y += Block.SIZE;
 
 //            when moved down reset counter
-            autoDropCounter = 0;
+                autoDropCounter = 0;
+            }
 
             KeyHandler.downKeyPressed = false;
         }
         if (KeyHandler.leftKeyPressed) {
-            b[0].x -= Block.SIZE;
-            b[1].x -= Block.SIZE;
-            b[2].x -= Block.SIZE;
-            b[3].x -= Block.SIZE;
+            if (!leftCollision) {
+                b[0].x -= Block.SIZE;
+                b[1].x -= Block.SIZE;
+                b[2].x -= Block.SIZE;
+                b[3].x -= Block.SIZE;
 
-            KeyHandler.leftKeyPressed = false;
+                KeyHandler.leftKeyPressed = false;
+            }
         }
         if (KeyHandler.rightKeyPressed) {
-            b[0].x += Block.SIZE;
-            b[1].x += Block.SIZE;
-            b[2].x += Block.SIZE;
-            b[3].x += Block.SIZE;
+            if (!rightCollision) {
+                b[0].x += Block.SIZE;
+                b[1].x += Block.SIZE;
+                b[2].x += Block.SIZE;
+                b[3].x += Block.SIZE;
 
-            KeyHandler.rightKeyPressed = false;
+                KeyHandler.rightKeyPressed = false;
+            }
         }
 
 //        increments every frame

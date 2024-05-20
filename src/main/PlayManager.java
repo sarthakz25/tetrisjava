@@ -1,10 +1,9 @@
 package main;
 
-import mino.Block;
-import mino.Mino;
-import mino.Mino_L1;
+import mino.*;
 
 import java.awt.*;
+import java.util.Random;
 
 public class PlayManager {
     //    main play area
@@ -34,8 +33,24 @@ public class PlayManager {
         MINO_START_Y = top_y + Block.SIZE;
 
 //        set starting mino
-        currentMino = new Mino_L1();
+        currentMino = pickMino();
         currentMino.setXY(MINO_START_X, MINO_START_Y);
+    }
+
+    private Mino pickMino() {
+//        pick a random mino
+        int i = new Random().nextInt(7);
+
+        return switch (i) {
+            case 0 -> new Mino_L1();
+            case 1 -> new Mino_L2();
+            case 2 -> new Mino_Square();
+            case 3 -> new Mino_Bar();
+            case 4 -> new Mino_T();
+            case 5 -> new Mino_Z1();
+            case 6 -> new Mino_Z2();
+            default -> null;
+        };
     }
 
     public void update() {
@@ -59,6 +74,15 @@ public class PlayManager {
 //        draw current mino
         if (currentMino != null) {
             currentMino.draw(g2);
+        }
+
+//        draw pause
+        g2.setColor(Color.gray);
+        g2.setFont(g2.getFont().deriveFont(50f));
+        if (KeyHandler.pausePressed) {
+            x = 160;
+            y = top_y + 320;
+            g2.drawString("PAUSED (Press SPACE to continue)", x, y);
         }
     }
 }
