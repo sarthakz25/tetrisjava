@@ -12,6 +12,9 @@ public class Mino {
     //    4 directions (1,2,3,4)
     public int direction = 1;
     boolean leftCollision, rightCollision, bottomCollision;
+    public boolean active = true;
+    public boolean deactivating;
+    int deactivateCounter = 0;
 
     public void create(Color c) {
         b[0] = new Block(c);
@@ -60,6 +63,8 @@ public class Mino {
         rightCollision = false;
         bottomCollision = false;
 
+        checkStaticBlockCollision();
+
 //        to check frame collision
 //        left wall
         for (Block value : b) {
@@ -89,6 +94,8 @@ public class Mino {
         rightCollision = false;
         bottomCollision = false;
 
+        checkStaticBlockCollision();
+
 //        check frame collision
 //        left wall
         for (Block value : tempB) {
@@ -113,7 +120,40 @@ public class Mino {
         }
     }
 
+    private void checkStaticBlockCollision() {
+        for (int i = 0; i < PlayManager.staticBlocks.size(); i++) {
+            int targetX = PlayManager.staticBlocks.get(i).x;
+            int targetY = PlayManager.staticBlocks.get(i).y;
+
+//            check down
+            for (Block block : b) {
+                if (block.x == targetX && block.y + Block.SIZE == targetY) {
+                    bottomCollision = true;
+                    break;
+                }
+            }
+//            check left
+            for (Block block : b) {
+                if (block.x - Block.SIZE == targetX && block.y == targetY) {
+                    leftCollision = true;
+                    break;
+                }
+            }
+//            check right
+            for (Block block : b) {
+                if (block.x + Block.SIZE == targetX && block.y == targetY) {
+                    rightCollision = true;
+                    break;
+                }
+            }
+        }
+    }
+
     public void update() {
+        if (deactivating) {
+            deactivating();
+        }
+
 //        move mino
         if (KeyHandler.upKeyPressed) {
             switch (direction) {
@@ -170,15 +210,35 @@ public class Mino {
             }
         }
 
+        if (bottomCollision) {
+            deactivating = true;
+        } else {
 //        increments every frame
-        autoDropCounter++;
-        if (autoDropCounter == PlayManager.dropInterval) {
+            autoDropCounter++;
+            if (autoDropCounter == PlayManager.dropInterval) {
 //            mino drops
-            b[0].y += Block.SIZE;
-            b[1].y += Block.SIZE;
-            b[2].y += Block.SIZE;
-            b[3].y += Block.SIZE;
-            autoDropCounter = 0;
+                b[0].y += Block.SIZE;
+                b[1].y += Block.SIZE;
+                b[2].y += Block.SIZE;
+                b[3].y += Block.SIZE;
+                autoDropCounter = 0;
+            }
+        }
+    }
+
+    private void deactivating() {
+        deactivateCounter++;
+
+//        wait 45 frames until deactivate
+        if (deactivateCounter == 45) {
+            deactivateCounter = 0;
+//            check if it's still at bottom
+            checkMovementCollision();
+
+//            deactivate mino
+            if (bottomCollision) {
+                active = false;
+            }
         }
     }
 

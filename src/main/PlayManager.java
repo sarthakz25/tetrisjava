@@ -3,6 +3,7 @@ package main;
 import mino.*;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Random;
 
 public class PlayManager {
@@ -18,6 +19,10 @@ public class PlayManager {
     Mino currentMino;
     final int MINO_START_X;
     final int MINO_START_Y;
+    Mino nextMino;
+    final int NEXTMINO_X;
+    final int NEXTMINO_Y;
+    public static ArrayList<Block> staticBlocks = new ArrayList<>(); // for inactive minos
 
     //    miscellaneous
     public static int dropInterval = 60; // drop in every 60 frames
@@ -32,9 +37,15 @@ public class PlayManager {
         MINO_START_X = left_x + (WIDTH / 2) - Block.SIZE;
         MINO_START_Y = top_y + Block.SIZE;
 
+        NEXTMINO_X = right_x + 175;
+        NEXTMINO_Y = top_y + 500;
+
 //        set starting mino
         currentMino = pickMino();
         currentMino.setXY(MINO_START_X, MINO_START_Y);
+
+        nextMino = pickMino();
+        nextMino.setXY(NEXTMINO_X, NEXTMINO_Y);
     }
 
     private Mino pickMino() {
@@ -54,7 +65,69 @@ public class PlayManager {
     }
 
     public void update() {
-        currentMino.update();
+//        check if current mino is active
+        if (!currentMino.active) {
+//            if not, put into staticBlocks
+            staticBlocks.add(currentMino.b[0]);
+            staticBlocks.add(currentMino.b[1]);
+            staticBlocks.add(currentMino.b[2]);
+            staticBlocks.add(currentMino.b[3]);
+
+            currentMino.deactivating = false;
+
+//            replace current with next
+            currentMino = nextMino;
+            currentMino.setXY(MINO_START_X, MINO_START_Y);
+            nextMino = pickMino();
+            nextMino.setXY(NEXTMINO_X, NEXTMINO_Y);
+
+//            when minos are inactive
+            checkDelete();
+        } else {
+            currentMino.update();
+        }
+    }
+
+    //    check if lines can be deleted
+    private void checkDelete() {
+        int x = left_x;
+        int y = top_y;
+        int blockCount = 0;
+
+        while (x < right_x && y < bottom_y) {
+            for (Block staticBlock : staticBlocks) {
+                if (staticBlock.x == x && staticBlock.y == y) {
+//                    increase count
+                    blockCount++;
+                }
+            }
+
+            x += Block.SIZE;
+
+            if (x == right_x) {
+                if (blockCount == 12) {
+//                    line filled with blocks, delete
+                    for (int i = staticBlocks.size() - 1; i >= 0; i--) {
+//                        remove all blocks in current y line
+                        if (staticBlocks.get(i).y == y) {
+                            staticBlocks.remove(i);
+                        }
+                    }
+
+//                    line deleted so slide down above blocks
+                    for (Block staticBlock : staticBlocks) {
+//                        move block above current y down by block size
+                        if (staticBlock.y < y) {
+                            staticBlock.y += Block.SIZE;
+                        }
+                    }
+                }
+
+                blockCount = 0;
+                x = left_x;
+                y += Block.SIZE;
+            }
+        }
     }
 
     public void draw(Graphics2D g2) {
@@ -74,6 +147,14 @@ public class PlayManager {
 //        draw current mino
         if (currentMino != null) {
             currentMino.draw(g2);
+        }
+
+//        draw next mino
+        nextMino.draw(g2);
+
+//        draw staticBlocks
+        for (Block staticBlock : staticBlocks) {
+            staticBlock.draw(g2);
         }
 
 //        draw pause
