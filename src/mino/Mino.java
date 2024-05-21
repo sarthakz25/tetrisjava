@@ -1,5 +1,6 @@
 package mino;
 
+import main.GamePanel;
 import main.KeyHandler;
 import main.PlayManager;
 
@@ -171,6 +172,7 @@ public class Mino {
                     break;
             }
             KeyHandler.upKeyPressed = false;
+            GamePanel.se.play(3, false);
         }
 
         checkMovementCollision();
@@ -211,6 +213,10 @@ public class Mino {
         }
 
         if (bottomCollision) {
+            if (!deactivating) {
+                GamePanel.se.play(4, false);
+            }
+
             deactivating = true;
         } else {
 //        increments every frame

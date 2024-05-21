@@ -24,8 +24,19 @@ public class PlayManager {
     final int NEXTMINO_Y;
     public static ArrayList<Block> staticBlocks = new ArrayList<>(); // for inactive minos
 
-    //    miscellaneous
+    //    misc
     public static int dropInterval = 60; // drop in every 60 frames
+    boolean gameOver;
+
+    //    effect
+    boolean effectCounterOn;
+    int effectCounter;
+    ArrayList<Integer> effectY = new ArrayList<>();
+
+    //    score
+    int level = 1;
+    int lines;
+    int score;
 
     public PlayManager() {
 //        main play area frame
@@ -73,6 +84,14 @@ public class PlayManager {
             staticBlocks.add(currentMino.b[2]);
             staticBlocks.add(currentMino.b[3]);
 
+//            check if game over
+            if (currentMino.b[0].x == MINO_START_X && currentMino.b[0].y == MINO_START_Y) {
+//                current mino immediately collided i.e. x y same as next mino
+                gameOver = true;
+                GamePanel.music.stop();
+                GamePanel.se.play(2, false);
+            }
+
             currentMino.deactivating = false;
 
 //            replace current with next
@@ -93,6 +112,7 @@ public class PlayManager {
         int x = left_x;
         int y = top_y;
         int blockCount = 0;
+        int lineCount = 0;
 
         while (x < right_x && y < bottom_y) {
             for (Block staticBlock : staticBlocks) {
@@ -106,11 +126,28 @@ public class PlayManager {
 
             if (x == right_x) {
                 if (blockCount == 12) {
+                    effectCounterOn = true;
+                    effectY.add(y);
+
 //                    line filled with blocks, delete
                     for (int i = staticBlocks.size() - 1; i >= 0; i--) {
 //                        remove all blocks in current y line
                         if (staticBlocks.get(i).y == y) {
                             staticBlocks.remove(i);
+                        }
+                    }
+
+                    lineCount++;
+                    lines++;
+
+//                    increase drop speed acc to line score
+                    if (lines % 10 == 0 && dropInterval > 1) {
+                        level++;
+
+                        if (dropInterval > 10) {
+                            dropInterval -= 10;
+                        } else {
+                            dropInterval -= 1;
                         }
                     }
 
@@ -128,15 +165,22 @@ public class PlayManager {
                 y += Block.SIZE;
             }
         }
+
+//        add score
+        if (lineCount > 0) {
+            GamePanel.se.play(1, false);
+            int singleLineScore = 10 * level;
+            score += singleLineScore * lineCount;
+        }
     }
 
     public void draw(Graphics2D g2) {
-//        draw play area frame
+//        play area frame
         g2.setColor(Color.white);
         g2.setStroke(new BasicStroke(4f));
         g2.drawRect(left_x - 4, top_y - 4, WIDTH + 8, HEIGHT + 8);
 
-//        draw next mino frame
+//        next mino frame
         int x = right_x + 100;
         int y = bottom_y - 200;
         g2.drawRect(x, y, 200, 200);
@@ -144,26 +188,62 @@ public class PlayManager {
         g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         g2.drawString("NEXT", x + 70, y + 50);
 
-//        draw current mino
+//        score frame
+        g2.drawRect(x, top_y + 150, 250, 200);
+        x += 35;
+        y = top_y + 200;
+        g2.drawString("Level: " + level, x, y);
+        y += 50;
+        g2.drawString("Lines: " + lines, x, y);
+        y += 50;
+        g2.drawString("Score: " + score, x, y);
+
+//        current mino
         if (currentMino != null) {
             currentMino.draw(g2);
         }
 
-//        draw next mino
+//        next mino
         nextMino.draw(g2);
 
-//        draw staticBlocks
+//        staticBlocks
         for (Block staticBlock : staticBlocks) {
             staticBlock.draw(g2);
         }
 
-//        draw pause
-        g2.setColor(Color.gray);
-        g2.setFont(g2.getFont().deriveFont(50f));
-        if (KeyHandler.pausePressed) {
-            x = 160;
-            y = top_y + 320;
-            g2.drawString("PAUSED (Press SPACE to continue)", x, y);
+//        effect
+        if (effectCounterOn) {
+            effectCounter++;
+
+            g2.setColor(Color.red);
+            for (Integer integer : effectY) {
+                g2.fillRect(left_x, integer, WIDTH, Block.SIZE);
+            }
+
+            if (effectCounter == 10) {
+                effectCounterOn = false;
+                effectCounter = 0;
+                effectY.clear();
+            }
         }
+
+//        pause, game over
+        g2.setColor(Color.pink);
+        g2.setFont(new Font("Lucida Console", Font.ITALIC, 50));
+        if (gameOver) {
+            x = 80;
+            y = top_y + 340;
+            g2.drawString("GAME OVER", x, y);
+        } else if (KeyHandler.pausePressed) {
+            x = 130;
+            y = top_y + 340;
+            g2.drawString("PAUSED", x, y);
+        }
+
+//        game title
+        x = 130;
+        y = top_y + 260;
+        g2.setColor(Color.white);
+        g2.drawString("Tetris", x, y);
     }
 }
